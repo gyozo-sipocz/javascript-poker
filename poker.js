@@ -1,11 +1,14 @@
 const newGameButton = document.querySelector('.js-new-game-button');
 const playerCardsContainer = document.querySelector('.js-player-cards-container');
-
-playerCardsContainer.innerHTML = 'Ide jönnek majd a lapok'
+const chipCountContainer = document.querySelector('.js-chip-count-container');
+const potContainer = document.querySelector('.js-pot-container');
 
 // Program State
 let deckID = null;
 let playerCards = [];
+let playerChips = 100;
+let computerChips = 100;
+let pot = 0;
 
 function renderPlayerCards() {
   let html = '';
@@ -14,7 +17,25 @@ function renderPlayerCards() {
     html += `<img src="${card.image}" alt="${card.code}" />`;
   }
   playerCardsContainer.innerHTML = html;
+}
 
+function renderChips() {
+  chipCountContainer.innerHTML = `
+    <div class="chip-count">Player chips: ${ playerChips }</div>
+    <div class="chip-count">Computer chips: ${ computerChips }</div>
+  `;
+}
+
+function renderPot() {
+  potContainer.innerHTML = `
+  <div class="chip-count">Pot: ${ pot }</div>
+  `
+}
+
+function render() {
+  renderPlayerCards();
+  renderChips();
+  renderPot();
 }
 
 function drawAndRenderPlayerCards() {
@@ -23,7 +44,7 @@ function drawAndRenderPlayerCards() {
   .then(data => data.json())
   .then(function(response) {
     playerCards = response.cards;
-    renderPlayerCards();
+    render();
   });
 }
 
