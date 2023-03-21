@@ -83,14 +83,28 @@ function drawAndRenderPlayerCards() {
   });
 }
 
-function startGame() {
-  initialize();
+function postBlinds() {
+  playerChips -= 1;
+  computerChips -= 2;
+  pot += 3;
+  render();
+}
+
+// egy leosztást is indíthatunk
+function startHand() {
+  postBlinds();
   fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
     .then(data => data.json())
     .then(function(response) {
       deckID = response.deck_id;
       drawAndRenderPlayerCards(); // TODO: refactor async-await segítségével
     });
+}
+
+// egy játék egy vagy több leosztásból áll
+function startGame() {
+  initialize();
+  startHand();
 }
 
 function bet() {
