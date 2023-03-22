@@ -118,8 +118,20 @@ function startGame() {
 
 function shouldComputerCall() {
   if (computerCards.length !== 2) return false; // extra védelem
-  [{code: card1Code}, {code: card2Code}] = computerCards;
-  return true;
+  const card1Code = computerCards[0].code; //pl. AC, 4H, 9D, 0H (10:0)
+  const card2Code = computerCards[1].code;
+  const card1Value = card1Code[0];
+  const card2Value = card2Code[1];
+  const card1Suit = card1Code[1];
+  const card2Suit = card2Code[1];
+
+  return  card1Value === card2Value ||
+          ['0', 'J', 'Q', 'K', 'A'].includes( card1Value ) ||
+          ['0', 'J', 'Q', 'K', 'A'].includes( card2Value ) ||
+          (
+            card1Suit === card2Suit &&
+            Math.abs(Number(card1Value) - Number(card2Value)) <= 2
+          );
 }
 
 function computerMoveAfterBet() {
@@ -127,8 +139,8 @@ function computerMoveAfterBet() {
     .then(data => data.json())
     .then(function(response) {
         computerCards = response.cards;
-        debugger;
-        alert(shouldComputerCall() ? 'Call' : 'Fold');      
+        alert(shouldComputerCall() ? 'Call' : 'Fold'); 
+        console.log(computerCards);     
         // render();
   });
 }
@@ -139,6 +151,8 @@ function bet() {
   pot += betValue;
   //játékos zsetonjaiból kivonjuk a bet méretét
   playerChips -= betValue;
+  //játék állapota: játékos megtette a tétjét
+  playerBetPlaced = true;
   //újrarendereljük
   render();
   // ellenfél reakciója
