@@ -1,17 +1,23 @@
 const newGameButton = document.querySelector('.js-new-game-button');
-const playerCardsContainer = document.querySelector('.js-player-cards-container');
-const chipCountContainer = document.querySelector('.js-chip-count-container');
 const potContainer = document.querySelector('.js-pot-container');
 const betArea = document.querySelector('.js-bet-area');
 const betSlider = document.querySelector('#bet-amount');
 const betSliderValue = document.querySelector('.js-slider-value');
 const betButton = document.querySelector('.js-bet-button');
 
+const playerCardsContainer = document.querySelector('.js-player-cards-container');
+const playerChipContainer = document.querySelector('.js-player-chip-container');
+
+const computerCardsContainer = document.querySelector('.js-computer-cards-container');
+const computerChipContainer = document.querySelector('.js-computer-chip-container');
+const computerActionContainer = document.querySelector('.js-computer-action');
+
 // Program State
 let {
   deckID,
   playerCards,      // játékos lapjai
   computerCards,    // gép lapjai (TODO: private? OOP??)
+  computerAction,   // számítógép cselekedete (call, fold)
   playerChips,      // játékos zsetonjai
   computerChips,    // gép zsetonjai
   playerBetPlaced,  // játékos már licitált
@@ -22,6 +28,8 @@ function getInitialState() {
   return {
     deckID: null,
     playerCards: [],
+    computerCards: [],
+    computerAction: null,
     playerChips: 100,
     computerChips: 100,
     playerBetPlaced: false,
@@ -33,10 +41,13 @@ function initialize() {
   ({
     deckID,
     playerCards,
+    computerCards,
+    computerAction,
     playerChips,
     computerChips,
     playerBetPlaced,
-    pot} = getInitialState());
+    pot
+  } = getInitialState());
 }
 
 function canBet() {
@@ -53,19 +64,26 @@ function renderSlider() {
   }
 }
 
-function renderPlayerCards() {
+function renderCardsInContainer(cards, container) {
   let html = '';
 
-  for (let card of playerCards) {
+  for (let card of cards) {
     html += `<img src="${card.image}" alt="${card.code}" />`;
   }
-  playerCardsContainer.innerHTML = html;
+  container.innerHTML = html;
+}
+
+function renderAllCards() {
+  renderCardsInContainer(playerCards, playerCardsContainer);
+  renderCardsInContainer(computerCards, computerCardsContainer);
 }
 
 function renderChips() {
-  chipCountContainer.innerHTML = `
-    <div class="chip-count">Player chips: ${ playerChips }</div>
-    <div class="chip-count">Computer chips: ${ computerChips }</div>
+  playerChipContainer.innerHTML = `
+    <div class="chip-count">Játékos: ${ playerChips } zseton</div>
+  `;
+  computerChipContainer.innerHTML = `
+    <div class="chip-count">Számítógép: ${ computerChips } zseton</div>
   `;
 }
 
@@ -75,11 +93,17 @@ function renderPot() {
   `;
 }
 
+function renderActions() {
+  computerActionContainer.innerHTML = computerAction ?? "";
+
+}
+
 function render() {
-  renderPlayerCards();
+  renderAllCards();
   renderChips();
   renderPot();
   renderSlider();
+  renderActions();
 }
 
 function drawAndRenderPlayerCards() {
@@ -116,7 +140,7 @@ function startGame() {
   startHand();
 }
 
-function shouldComputerCall() {
+function shouldComputerCall(computerCards) {
   if (computerCards.length !== 2) return false; // extra védelem
   const card1Code = computerCards[0].code; //pl. AC, 4H, 9D, 0H (10:0)
   const card2Code = computerCards[1].code;
@@ -138,10 +162,13 @@ function computerMoveAfterBet() {
   fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`)
     .then(data => data.json())
     .then(function(response) {
-        computerCards = response.cards;
-        alert(shouldComputerCall() ? 'Call' : 'Fold'); 
-        console.log(computerCards);     
-        // render();
+      if (shouldComputerCall(response.cards)) {
+       computerAction = 'Call';
+       computerCards = response.cards;
+      } else {
+          computerAction = 'Fold';
+        }
+        render();
   });
 }
 
