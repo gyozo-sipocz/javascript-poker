@@ -19,7 +19,7 @@ let {
   computerCards,    // gép lapjai (TODO: private? OOP??)
   computerAction,   // számítógép cselekedete (call, fold)
   playerChips,      // játékos zsetonjai
-  palyerBets,       // játékos licitje ebben a licitkörben
+  playerBets,       // játékos licitje ebben a licitkörben
   computerChips,    // gép zsetonjai
   computerBets,     // számítógép licitje ebben a licitkörben
   playerBetPlaced,  // játékos már licitált
@@ -33,7 +33,7 @@ function getInitialState() {
     computerCards: [],
     computerAction: null,
     playerChips: 100,
-    palyerBets: 0,
+    playerBets: 0,
     computerChips: 100,
     computerBets: 0,
     playerBetPlaced: false,
@@ -48,7 +48,7 @@ function initialize() {
     computerCards,
     computerAction,
     playerChips,
-    palyerBets,
+    playerBets,
     computerChips,
     computerBets,
     playerBetPlaced,
@@ -124,7 +124,7 @@ function drawAndRenderPlayerCards() {
 
 function postBlinds() {
   playerChips -= 1;
-  palyerBets += 1;
+  playerBets += 1;
   computerChips -= 2;
   computerBets += 2;
   pot += 3;
@@ -140,6 +140,23 @@ function startHand() {
       deckID = response.deck_id;
       drawAndRenderPlayerCards(); // TODO: refactor async-await segítségével
     });
+}
+
+function endHand() {
+  setTimeout(() => {
+      if (computerAction === "Fold") {  // TODO: felsorolt típus kell az akciónak
+        playerChips += pot;  
+        pot = 0;
+      }
+      deckID = null;
+      playerBets = 0;
+      computerBets = 0;
+      playerCards =  [];
+      computerCards = [];
+      computerAction = null;
+      playerBetPlaced = false;
+      render();
+  }, 2000);
 }
 
 // egy játék egy vagy több leosztásból áll
@@ -173,7 +190,7 @@ function computerMoveAfterBet() {
       if (pot === 4) {
         computerAction = 'Check';
         computerCards = response.cards;
-      }else if (shouldComputerCall(response.cards)) {
+      } else if (shouldComputerCall(response.cards)) {
         computerAction = 'Call';
         computerCards = response.cards;
         // játékos: Bet (vaktétek és játékos licit)
@@ -182,14 +199,16 @@ function computerMoveAfterBet() {
         // Bet + 2 = pot
         // 2 zsetont már betett computer ,így bet - 2-t kell megadnia
         // Bet - 2 = pot - 4
-        const difference = palyerBets - computerBets;
+        const difference = playerBets - computerBets;
         computerChips -= difference;
         computerBets += difference;
         pot += difference;
       } else {
           computerAction = 'Fold';
-        }
+
+      }
         render();
+        endHand();
   });
 }
 
@@ -201,7 +220,7 @@ function bet() {
   playerChips -= betValue;
   //játék állapota: játékos megtette a tétjét
   playerBetPlaced = true;
-  palyerBets += betValue;
+  playerBets += betValue;
   //újrarendereljük
   render();
   // ellenfél reakciója
