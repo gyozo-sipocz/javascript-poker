@@ -287,12 +287,21 @@ function bet() {
   computerMoveAfterBet();
 }
 
-function getPotBet() {
+function getPlayerPotBet() {
   let difference = computerBets - playerBets;
-  return (pot + difference) * 2;
+  return Math.min(playerChips, pot + 2*difference);
 }
 
 function setSliderValue(percentage) {
+  let betSize = null;
+  if(typeof percentage === 'number') {
+    betSize = Math.floor(playerChips * percentage / 100);
+  } else {
+    betSize = getPlayerPotBet();
+  }
+
+  betSlider.value = betSize;
+  render();
 
 }
 
