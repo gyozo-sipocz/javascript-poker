@@ -10,11 +10,12 @@ const bet50Button = document.querySelector('.js-bet50');
 
 const playerCardsContainer = document.querySelector('.js-player-cards-container');
 const playerChipContainer = document.querySelector('.js-player-chip-container');
-
+const playerStatusContainer = document.querySelector('.js-player-status-container');
 
 const computerCardsContainer = document.querySelector('.js-computer-cards-container');
 const computerChipContainer = document.querySelector('.js-computer-chip-container');
 const computerActionContainer = document.querySelector('.js-computer-action');
+const computerStatusContainer = document.querySelector('.js-computer-status-container');
 
 const communityCardsContainer = document.querySelector('.js-community-cards');
 
@@ -27,6 +28,8 @@ let {
   computerAction,   // számítógép cselekedete (call, fold)
   playerChips,      // játékos zsetonjai
   playerBets,       // játékos licitje ebben a licitkörben
+  playerStatus,     // játékos státuszinformációja (győzött, vesztette, döntetlen, bedobta)
+  computerStatus,   // számítógép státuszinformációja (győzött, vesztette, döntetlen, bedobta)
   computerChips,    // gép zsetonjai
   computerBets,     // számítógép licitje ebben a licitkörben
   playerBetPlaced,  // játékos már licitált
@@ -42,12 +45,27 @@ function getInitialState() {
     computerAction: null,
     playerChips: 100,
     playerBets: 0,
+    playerStatus: "",
     computerChips: 100,
     computerBets: 0,
+    computerStatus: "",
     playerBetPlaced: false,
     pot: 0
   };
 }
+
+// Állapotmenedzsment TODO: új leosztás indításnál ezeket az értékeket érdemes frissíteni
+// deckID = null;
+// playerBets = 0;
+// computerBets = 0;
+// playerCards = [];
+// computerCards = [];
+// computerAction = null;
+// playerBetPlaced = false;
+// playerStatus = "";
+// computerStatus = "";
+// computerAction = "";
+// Gyakorlatilag mindent resetelünk, kivéve a zseton állást
 
 function initialize() {
   ({
@@ -58,8 +76,10 @@ function initialize() {
     computerAction,
     playerChips,
     playerBets,
+    playerStatus,
     computerChips,
     computerBets,
+    computerStatus,
     playerBetPlaced,
     pot
   } = getInitialState());
@@ -118,12 +138,18 @@ function renderActions() {
 
 }
 
+function renderStatusInfo() {
+  playerStatusContainer.innerHTML = playerStatus;
+  computerStatusContainer.innerHTML = computerStatus;
+}
+
 function render() {
   renderAllCards();
   renderChips();
   renderPot();
   renderSlider();
   renderActions();
+  renderStatusInfo();
 }
 
 async function drawPlayerCards() {
@@ -158,24 +184,17 @@ function endHand(winner = null) {
       if (computerAction === ACTIONS.Fold) {
         playerChips += pot;  
         pot = 0;
-      } else if (winner === WINNER.Player) {
+      } else if (winner === STATUS.Player) {
         playerChips += pot;  
         pot = 0;
-      } else if (winner === WINNER.Computer) {
+      } else if (winner === STATUS.Computer) {
         computerChips += pot;
         pot = 0;
-      } else if (winner === WINNER.Draw) {
+      } else if (winner === STATUS.Draw) {
         playerChips += playerBets;
         computerChips += computerBets;
         pot = 0;
       }
-      deckID = null;
-      playerBets = 0;
-      computerBets = 0;
-      playerCards =  [];
-      computerCards = [];
-      computerAction = null;
-      playerBetPlaced = false;
       render();
   }, 2000);
 }
@@ -204,7 +223,7 @@ function shouldComputerCall(computerCards) {
           );
 }
 
-const SHOWDOWN_API_PREFIX = 'https://api.pokerapi.dev/v1/winner/texas_holdem?';
+const SHOWDOWN_API_PREFIX = 'https://api.pokerapi.dev/v1/winner/texas_holdem';
 function cardsToString(cards) {
   return cards.map((x) => (x.code[0] === '0' ? '1' + x.code : x.code)).toString();
 }
@@ -217,11 +236,11 @@ async function getWinner() {
   const response = await data.json();
   const winners = response.winners;
   if (winners.length === 2) {
-    return WINNER.Draw;
+    return STATUS.Draw;
   } else if(winners[0].cards === pc0) {
-    return WINNER.Player;
+    return STATUS.Player;
   } else {
-    return WINNER.Computer;
+    return STATUS.Computer;
   }
 }
 
@@ -264,9 +283,17 @@ async function computerMoveAfterBet() {
     computerCards = response.cards;
     render();
     const winner = await showdown();
-    console.log(winner);
+    if(winner === STATUS.Player) {
+      playerStatus = STATUS.Player;
+    } else if(winner === STATUS.Computer) {
+      computerStatus = STATUS.Computer;
+    } else if(winner === STATUS.Draw) {
+      playerStatus = STATUS.Draw;
+      computerStatus = STATUS.Draw;
+    }
     endHand(winner);
-  } else {
+  } else { // Computer Folded
+    playerStatus = STATUS.Player;
     render();
     endHand();
   }
