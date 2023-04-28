@@ -122,14 +122,12 @@ function render() {
   renderActions();
 }
 
-function drawAndRenderPlayerCards() {
+async function drawAndRenderPlayerCards() {
   if (deckID == null) return;
-  fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`)
-    .then(data => data.json())
-    .then(function(response) {
-        playerCards = response.cards;
-        render();
-  });
+  const data = await fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`);
+  const response = await data.json();
+  playerCards = response.cards;
+  render();
 }
 
 function postBlinds() {
@@ -142,14 +140,12 @@ function postBlinds() {
 }
 
 // egy leosztást is indíthatunk
-function startHand() {
+async function startHand() {
   postBlinds();
-  fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-    .then(data => data.json())
-    .then(function(response) {
-      deckID = response.deck_id;
-      drawAndRenderPlayerCards(); // TODO: refactor async-await segítségével
-    });
+  const data = await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1');
+  const response = await data.json();
+  deckID = response.deck_id;
+  drawAndRenderPlayerCards(); // TODO: refactor async-await segítségével
 }
 
 function endHand(winner = null) {
@@ -234,42 +230,41 @@ async function showdown() {
 
 }
 
-function computerMoveAfterBet() {
-  fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`)
-    .then((data) => data.json())
-    .then(async function (response) {
-      if (pot === 4) {
-        computerAction = 'Check';
-      } else if (shouldComputerCall(response.cards)) {
-        computerAction = 'Call';
-      } else {
-        computerAction = 'Fold';
-      }
+async function computerMoveAfterBet() {
+  const data = await fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`);
+  const response = await data.json();
 
-      if (computerAction === 'Call') {
-        // játékos: Bet (vaktétek és játékos licit)
-        // computer: 2
-        // kassza: pot
-        // Bet + 2 = pot
-        // 2 zsetont már betett computer ,így bet - 2-t kell megadnia
-        // Bet - 2 = pot - 4
-        const difference = playerBets - computerBets;
-        computerChips -= difference;
-        computerBets += difference;
-        pot += difference;
-      }
+  if (pot === 4) {
+    computerAction = 'Check';
+  } else if (shouldComputerCall(response.cards)) {
+    computerAction = 'Call';
+  } else {
+    computerAction = 'Fold';
+  }
 
-      if (computerAction === 'Check' || computerAction === 'Call') {
-        computerCards = response.cards;
-        render();
-        const winner = await showdown();
-        console.log(winner);
-        endHand(winner);
-      } else {
-        render();
-        endHand();
-      }
-  });
+  if (computerAction === 'Call') {
+    // játékos: Bet (vaktétek és játékos licit)
+    // computer: 2
+    // kassza: pot
+    // Bet + 2 = pot
+    // 2 zsetont már betett computer ,így bet - 2-t kell megadnia
+    // Bet - 2 = pot - 4
+    const difference = playerBets - computerBets;
+    computerChips -= difference;
+    computerBets += difference;
+    pot += difference;
+  }
+
+  if (computerAction === 'Check' || computerAction === 'Call') {
+    computerCards = response.cards;
+    render();
+    const winner = await showdown();
+    console.log(winner);
+    endHand(winner);
+  } else {
+    render();
+    endHand();
+  }
 }
 
 function bet() {
