@@ -63,6 +63,10 @@ function initialize() {
     playerBetPlaced,
     pot
   } = getInitialState());
+  // A bet slider állapota csak a DOM-ban van rögzítve, hozzuk alapértelmezettre
+  betSlider.value = 1;
+  // Feltételezzük, hogy később az alapértelmezett értékeket máshol renderelni fogjuk
+  // ezért a slider értékét itt nem kell renderelnünk.
 }
 
 function canBet() {
