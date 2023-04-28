@@ -122,9 +122,9 @@ function render() {
   renderActions();
 }
 
-async function drawAndRenderPlayerCards() {
+async function drawPlayerCards() {
   if (deckID == null) return;
-  const data = await fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`);
+  const data = await fetch(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=2`);
   const response = await data.json();
   playerCards = response.cards;
   render();
@@ -145,7 +145,8 @@ async function startHand() {
   const data = await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1');
   const response = await data.json();
   deckID = response.deck_id;
-  drawAndRenderPlayerCards(); // TODO: refactor async-await segítségével
+  await drawPlayerCards();
+  render();
 }
 
 function endHand(winner = null) {
@@ -201,14 +202,14 @@ function shouldComputerCall(computerCards) {
 
 const SHOWDOWN_API_PREFIX = 'https://api.pokerapi.dev/v1/winner/texas_holdem?';
 function cardsToString(cards) {
-  return cards.map(x => x.code[0] === '0' ? '1' + x.code : x.code).toString();
+  return cards.map((x) => (x.code[0] === '0' ? '1' + x.code : x.code)).toString();
 }
 async function getWinner() {
   // https://api.pokerapi.dev/v1/winner/texas_holdem?cc=AC,KD,QH,JS,7C&pc[]=10S,8C&pc[]=3S,2C&pc[]=QS,JH
   const cc = cardsToString(communityCards);
   const pc0 = cardsToString(playerCards);
   const pc1 = cardsToString(computerCards);
-  const data = await fetch(`${SHOWDOWN_API_PREFIX}?cc=${cc}&pc[]=${pc0}&[]=${pc1}`);
+  const data = await fetch(`${SHOWDOWN_API_PREFIX}?cc=${cc}&pc[]=${pc0}&pc[]=${pc1}`);
   const response = await data.json();
   const winners = response.winners;
   if (winners.length === 2) {
@@ -221,7 +222,7 @@ async function getWinner() {
 }
 
 async function showdown() {
-  const data = await fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=5`);
+  const data = await fetch(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=5`);
   const response = await data.json();
   communityCards = response.cards;
   render();
@@ -231,7 +232,7 @@ async function showdown() {
 }
 
 async function computerMoveAfterBet() {
-  const data = await fetch(`https://deckofcardsapi.com/api/deck/${ deckID }/draw/?count=2`);
+  const data = await fetch(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=2`);
   const response = await data.json();
 
   if (pot === 4) {
